@@ -1,0 +1,79 @@
+# CBT Support Hub — Apache Configuration
+
+# Disable directory browsing
+Options -Indexes
+
+# ----------------------------------------------------------------------
+# Rewrite engine
+# ----------------------------------------------------------------------
+<IfModule mod_rewrite.c>
+    Options +FollowSymlinks
+    RewriteEngine On
+
+    # ⚠ IMPORTANT: Set RewriteBase to match your deployment path:
+    #   XAMPP local (C:\xampp\htdocs\cbt_support_hub\):  /cbt_support_hub/public/
+    #   Production at domain root (https://yourdomain.com/):  /
+    RewriteBase /cbt_support_hub/public/
+
+    # Redirect trailing slashes
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_URI} (.+)/$
+    RewriteRule ^ %1 [L,R=301]
+
+    # Send all requests to index.php (except existing files)
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^([\s\S]*)$ index.php/$1 [L,NC,QSA]
+
+    # Pass Authorization header
+    RewriteCond %{HTTP:Authorization} .
+    RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+</IfModule>
+
+<IfModule !mod_rewrite.c>
+    ErrorDocument 404 index.php
+</IfModule>
+
+# ----------------------------------------------------------------------
+# Security Headers (H1 CSP, H3 HSTS)
+# ----------------------------------------------------------------------
+<IfModule mod_headers.c>
+    Header always set X-Frame-Options "DENY"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set X-XSS-Protection "1; mode=block"
+
+    # HIGH (H3): Enable once HTTPS is confirmed working on production
+    # Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains"
+
+    # HIGH (H1): Content Security Policy
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net https://fonts.googleapis.com 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' https://cdn.jsdelivr.net; frame-ancestors 'none';"
+
+    # Remove Server signature info
+    Header unset Server
+    Header unset X-Powered-By
+</IfModule>
+
+# Block access to sensitive files
+<FilesMatch "\.(env|log|sql|md|json|lock|gitignore)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# Block session files if they ever land in public/ (C3 safety net)
+<FilesMatch "^ci_session">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order deny,allow
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+ServerSignature Off
