@@ -23,3 +23,4 @@ ini_set('display_errors', '0');
  | release of the framework.
  */
 defined('CI_DEBUG') || define('CI_DEBUG', false);
+date_default_timezone_set('Asia/Kolkata');
