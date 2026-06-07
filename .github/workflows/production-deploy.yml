@@ -23,7 +23,7 @@ jobs:
       REMOTE_USER: ${{ secrets.SSH_USER }}
       SSH_PORT: ${{ secrets.SSH_PORT }}
       REMOTE_PATH: /var/www/cbt-support-hub
-      BACKUP_DIR: /home/backups
+      BACKUP_DIR: /home/backup
 
     steps:
       - name: Checkout repository
@@ -50,10 +50,10 @@ jobs:
           ssh -p "$PORT" "$REMOTE_USER@$REMOTE_HOST" "set -eu
             mkdir -p '$BACKUP_DIR'
             cd /var/www
-            TMP_ARCHIVE='$BACKUP_DIR/${DATE}.tar.gz.tmp'
-            FINAL_ARCHIVE='$BACKUP_DIR/${DATE}.tar.gz'
+            TMP_ARCHIVE='$BACKUP_DIR/${DATE}.zip.tmp'
+            FINAL_ARCHIVE='$BACKUP_DIR/${DATE}.zip'
             rm -f \"\$TMP_ARCHIVE\"
-            tar -czf \"\$TMP_ARCHIVE\" cbt-support-hub
+            zip -qry \"\$TMP_ARCHIVE\" cbt-support-hub
             mv \"\$TMP_ARCHIVE\" \"\$FINAL_ARCHIVE\"
           "
 
