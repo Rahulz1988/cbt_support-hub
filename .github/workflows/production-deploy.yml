@@ -50,10 +50,10 @@ jobs:
           ssh -p "$PORT" "$REMOTE_USER@$REMOTE_HOST" "set -eu
             mkdir -p '$BACKUP_DIR'
             cd /var/www
-            TMP_ARCHIVE='$BACKUP_DIR/${DATE}.zip.tmp'
-            FINAL_ARCHIVE='$BACKUP_DIR/${DATE}.zip'
+            TMP_ARCHIVE='$BACKUP_DIR/${DATE}.tar.gz.tmp'
+            FINAL_ARCHIVE='$BACKUP_DIR/${DATE}.tar.gz'
             rm -f \"\$TMP_ARCHIVE\"
-            zip -qry \"\$TMP_ARCHIVE\" cbt-support-hub
+            tar -czf \"\$TMP_ARCHIVE\" cbt-support-hub
             mv \"\$TMP_ARCHIVE\" \"\$FINAL_ARCHIVE\"
           "
 
