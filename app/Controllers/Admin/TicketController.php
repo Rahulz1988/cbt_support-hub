@@ -125,7 +125,8 @@ class TicketController extends BaseController
             // Set in_progress_at only on first transition to in_progress
             // Use isset() guard in case column doesn't exist yet in older DBs
             if (empty($ticket['in_progress_at'] ?? null)) {
-                $updateData['in_progress_at'] = new \CodeIgniter\Database\RawSql('NOW()');
+                //$updateData['in_progress_at'] = new \CodeIgniter\Database\RawSql('NOW()');
+		$updateData['in_progress_at'] = \CodeIgniter\I18n\Time::now('Asia/Kolkata')->format('Y-m-d H:i:s');
             }
         }
 
@@ -133,7 +134,8 @@ class TicketController extends BaseController
             // Use SQL NOW() for resolved_at so it is always in DB/server timezone.
             // PHP date() can differ from MySQL NOW() if timezones are mismatched,
             // which would break the DATE_SUB(NOW(), INTERVAL 2 HOUR) auto-close check.
-            $updateData['resolved_at'] = new \CodeIgniter\Database\RawSql('NOW()');
+            //$updateData['resolved_at'] = new \CodeIgniter\Database\RawSql('NOW()');
+	    $updateData['resolved_at'] = \CodeIgniter\I18n\Time::now('Asia/Kolkata')->format('Y-m-d H:i:s');
         }
 
         $this->model->update($id, $updateData);
