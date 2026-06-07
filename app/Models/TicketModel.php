@@ -99,10 +99,10 @@ class TicketModel extends Model
         $this->db->query("
             UPDATE tickets
             SET    status     = 'closed',
-                   updated_at = NOW()
+                   updated_at = CONVERT_TZ(NOW(), 'SYSTEM', 'Asia/Kolkata')
             WHERE  status     = 'resolved'
               AND  resolved_at IS NOT NULL
-              AND  resolved_at <= DATE_SUB(NOW(), INTERVAL 2 HOUR)
+              AND  resolved_at <= DATE_SUB(CONVERT_TZ(NOW(), 'SYSTEM', 'Asia/Kolkata'), INTERVAL 2 HOUR)
         ");
     }
 }

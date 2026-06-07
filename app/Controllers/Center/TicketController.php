@@ -64,16 +64,23 @@ class TicketController extends BaseController
             'mobile_number'  => 'required|exact_length[10]|regex_match[/^[0-9]{10}$/]',
         ];
 
-        if ($remoteAccess === 'yes') {
-            $rules['anydesk_id'] = 'required|min_length[5]|max_length[20]';
-        }
-
         if (! $issueIdRaw || $issueIdRaw === 'other') {
             $rules['description'] = 'required|min_length[10]|max_length[5000]';
         }
 
         if (! $this->validate($rules)) {
             return redirect()->back()->withInput()->with('errors', $this->validator->getErrors());
+        }
+
+        // Build comma-separated anydesk_id string from array input — manual validation
+        $anydeskId = null;
+        if ($remoteAccess === 'yes') {
+            $ids = $this->request->getPost('anydesk_id') ?? [];
+            $ids = array_filter(array_map('trim', (array) $ids));
+            if (empty($ids)) {
+                return redirect()->back()->withInput()->with('errors', ['anydesk_id' => 'At least one AnyDesk ID is required.']);
+            }
+            $anydeskId = implode(', ', $ids);
         }
 
         $issueId = null;
@@ -100,7 +107,7 @@ class TicketController extends BaseController
             'description'   => $description,
             'urgency'       => $this->request->getPost('urgency'),
             'remote_access' => $remoteAccess,
-            'anydesk_id'    => ($remoteAccess === 'yes') ? trim($this->request->getPost('anydesk_id') ?? '') : null,
+            'anydesk_id'    => $anydeskId,
             'mobile_number' => trim($this->request->getPost('mobile_number') ?? ''),
             'status'        => 'open',
         ]);
@@ -419,6 +426,7 @@ class TicketController extends BaseController
         fclose($out);
         exit;
     }
+
     /**
      * Format bytes into a human-readable string for error messages.
      */

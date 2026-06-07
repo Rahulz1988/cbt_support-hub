@@ -122,20 +122,25 @@
                                 <i class="bi bi-wifi me-1"></i>Yes — Required
                             </span>
                             <?php if (!empty($ticket['anydesk_id'])): ?>
-                                <div class="mt-2 p-2 rounded d-flex align-items-center gap-2"
-                                     style="background:#eff6ff;border:1px solid #bfdbfe;">
-                                    <i class="bi bi-display text-primary"></i>
-                                    <div>
-                                        <div style="font-size:.7rem;color:#6b7280;line-height:1;">AnyDesk ID</div>
-                                        <span style="font-size:1rem;font-weight:700;letter-spacing:.08em;color:#1e40af;font-family:monospace;">
-                                            <?= esc($ticket['anydesk_id']) ?>
-                                        </span>
+                                <div class="mt-2 p-2 rounded" style="background:#eff6ff;border:1px solid #bfdbfe;">
+                                    <div style="font-size:.7rem;color:#6b7280;line-height:1;margin-bottom:.4rem;">
+                                        <i class="bi bi-display me-1 text-primary"></i>AnyDesk ID(s)
                                     </div>
-                                    <button type="button" class="btn btn-sm ms-auto copy-anydesk-btn"
-                                            style="background:#2563eb;color:#fff;font-size:.72rem;padding:.2rem .55rem;"
-                                            data-anydesk="<?= esc($ticket['anydesk_id'], 'attr') ?>">
-                                        Copy
-                                    </button>
+                                    <?php
+                                        $anydeskIds = array_filter(array_map('trim', explode(',', $ticket['anydesk_id'])));
+                                    ?>
+                                    <?php foreach ($anydeskIds as $adId): ?>
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <span style="font-size:1rem;font-weight:700;letter-spacing:.08em;color:#1e40af;font-family:monospace;">
+                                                <?= esc($adId) ?>
+                                            </span>
+                                            <button type="button" class="btn btn-sm ms-auto copy-anydesk-btn"
+                                                    style="background:#2563eb;color:#fff;font-size:.72rem;padding:.2rem .55rem;"
+                                                    data-anydesk="<?= esc($adId, 'attr') ?>">
+                                                Copy
+                                            </button>
+                                        </div>
+                                    <?php endforeach; ?>
                                 </div>
                             <?php endif; ?>
                         <?php elseif (($ticket['remote_access'] ?? '') === 'no'): ?>
@@ -290,12 +295,13 @@
 
 <?= $this->section('scripts') ?>
 <script>
-// Copy AnyDesk ID
+// Copy AnyDesk ID — works for multiple buttons
 document.querySelectorAll('.copy-anydesk-btn').forEach(btn => {
     btn.addEventListener('click', function () {
         navigator.clipboard.writeText(this.dataset.anydesk).then(() => {
+            const orig = this.textContent;
             this.textContent = 'Copied!';
-            setTimeout(() => { this.textContent = 'Copy'; }, 1500);
+            setTimeout(() => { this.textContent = orig; }, 1500);
         });
     });
 });

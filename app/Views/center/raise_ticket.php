@@ -29,7 +29,7 @@ $fieldLabels = [
     'issue_type'    => 'Type of Issue',
     'remote_access' => 'Remote Access',
     'mobile_number' => 'Mobile Number',
-    'anydesk_id'    => 'AnyDesk ID',
+    'anydesk_id[]'  => 'AnyDesk ID',
     'description'   => 'Issue Description',
 ];
 
@@ -164,16 +164,24 @@ foreach ($rawErrors as $field => $msg) {
             </div>
         </div>
 
-        <!-- AnyDesk ID — shown only when Remote Access = Yes -->
+        <!-- AnyDesk IDs — shown only when Remote Access = Yes -->
         <div class="mb-3" id="anydeskBox" style="display:none;">
             <label class="form-label">
                 <i class="bi bi-display me-1 text-primary"></i>AnyDesk ID <span class="text-danger">*</span>
             </label>
-            <input type="text" name="anydesk_id" id="anydeskId" class="form-control"
-                   value="<?= old('anydesk_id') ?>"
-                   placeholder="e.g. 123 456 789"
-                   maxlength="20">
-            <div class="form-text">Enter the AnyDesk ID so the admin can connect remotely.</div>
+            <div id="anydeskList">
+                <div class="d-flex gap-2 mb-2 anydesk-row">
+                    <input type="text" name="anydesk_id[]" class="form-control anydesk-input"
+                           placeholder="e.g. 123 456 789">
+                    <button type="button" class="btn btn-outline-danger remove-anydesk" style="display:none;" title="Remove">
+                        <i class="bi bi-dash-lg"></i>
+                    </button>
+                </div>
+            </div>
+            <button type="button" id="addAnydesk" class="btn btn-outline-primary btn-sm mt-1">
+                <i class="bi bi-plus-lg me-1"></i>Add Another AnyDesk ID
+            </button>
+            <div class="form-text">Enter the AnyDesk ID(s) so the admin can connect remotely.</div>
         </div>
 
         <!-- 6. Mobile Number -->
@@ -247,16 +255,58 @@ function initCardGroup(radioClass, cardClass, onChangeCb) {
     refreshHighlight();
 }
 
-// Show/hide AnyDesk ID field based on remote access selection
-const anydeskBox   = document.getElementById('anydeskBox');
-const anydeskInput = document.getElementById('anydeskId');
+// ── AnyDesk multi-input ──────────────────────────────────────
+const anydeskBox  = document.getElementById('anydeskBox');
+const anydeskList = document.getElementById('anydeskList');
+
+function updateRemoveButtons() {
+    const rows = anydeskList.querySelectorAll('.anydesk-row');
+    rows.forEach(row => {
+        row.querySelector('.remove-anydesk').style.display = rows.length > 1 ? 'inline-flex' : 'none';
+    });
+}
+
+function updateAnydeskRequired(show) {
+    const firstInput = anydeskList.querySelector('.anydesk-input');
+    if (firstInput) firstInput.required = show;
+}
+
+document.getElementById('addAnydesk').addEventListener('click', function () {
+    const row = document.createElement('div');
+    row.className = 'd-flex gap-2 mb-2 anydesk-row';
+    row.innerHTML = `
+        <input type="text" name="anydesk_id[]" class="form-control anydesk-input" placeholder="e.g. 123 456 789">
+        <button type="button" class="btn btn-outline-danger remove-anydesk" title="Remove">
+            <i class="bi bi-dash-lg"></i>
+        </button>`;
+    anydeskList.appendChild(row);
+    updateRemoveButtons();
+});
+
+anydeskList.addEventListener('click', function (e) {
+    const btn = e.target.closest('.remove-anydesk');
+    if (btn) {
+        btn.closest('.anydesk-row').remove();
+        updateRemoveButtons();
+    }
+});
 
 function toggleAnydesk() {
     const yesRadio = document.querySelector('.remote-radio[value="yes"]');
     const show = yesRadio && yesRadio.checked;
     anydeskBox.style.display = show ? 'block' : 'none';
-    anydeskInput.required    = show;
-    if (!show) anydeskInput.value = '';
+    updateAnydeskRequired(show);
+    if (!show) {
+        // Clear all inputs and remove extra rows, keep only the first
+        anydeskList.querySelectorAll('.anydesk-row').forEach((row, i) => {
+            if (i === 0) {
+                row.querySelector('.anydesk-input').value = '';
+            } else {
+                row.remove();
+            }
+        });
+        updateRemoveButtons();
+    }
 }
 
 initCardGroup('urgency-radio',    'urgency-card');
