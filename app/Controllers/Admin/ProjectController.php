@@ -318,7 +318,21 @@ class ProjectController extends BaseController
 
         $file = $this->request->getFile('centers_csv');
         if ($file && $file->isValid() && $file->getClientExtension() === 'csv') {
-            $handle = fopen($file->getTempName(), 'r');
+            // Read raw bytes and detect/convert encoding to UTF-8
+            $raw      = file_get_contents($file->getTempName());
+            $encoding = mb_detect_encoding($raw, ['UTF-8', 'UTF-16', 'UTF-16LE', 'UTF-16BE', 'Windows-1252', 'ISO-8859-1'], true);
+            if ($encoding && $encoding !== 'UTF-8') {
+                $raw = mb_convert_encoding($raw, 'UTF-8', $encoding);
+            }
+            // Strip UTF-8 BOM if present
+            if (str_starts_with($raw, "\xEF\xBB\xBF")) {
+                $raw = substr($raw, 3);
+            }
+            // Write converted content to a temp file for fgetcsv
+            $tmpPath = tempnam(sys_get_temp_dir(), 'cbt_csv_');
+            file_put_contents($tmpPath, $raw);
+
+            $handle = fopen($tmpPath, 'r');
             $header = fgetcsv($handle); // skip header row
             while (($row = fgetcsv($handle)) !== false) {
                 // CSV columns: center_code, center_name, city, state, contact_name, contact_phone
@@ -352,6 +366,7 @@ class ProjectController extends BaseController
                 }
             }
             fclose($handle);
+            @unlink($tmpPath);
         }
 
         $manualCodes = $this->request->getPost('center_codes') ?? '';
