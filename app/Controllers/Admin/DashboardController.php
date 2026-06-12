@@ -85,5 +85,20 @@ class DashboardController extends BaseController
     {
         return $this->response->setJSON(['ok' => true]);
     }
+
+    /**
+     * Lightweight JSON endpoint for background tab-title polling.
+     * Returns the current count of open tickets.
+     * Called by the browser every 15 s even when the tab is hidden.
+     */
+    public function openTicketCount()
+    {
+        $db        = \Config\Database::connect();
+        $openCount = (int) $db->query(
+            "SELECT COUNT(*) AS cnt FROM tickets WHERE status = 'open'"
+        )->getRow()->cnt;
+
+        return $this->response->setJSON(['open' => $openCount]);
+    }
 }
 

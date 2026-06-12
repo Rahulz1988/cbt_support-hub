@@ -44,6 +44,7 @@ $routes->group('admin', ['filter' => 'auth:admin'], function($routes) {
     // Attachment serving
     $routes->get('attachments/(:num)', 'Admin\TicketController::serveAttachment/$1');
     $routes->get('ping',               'Admin\DashboardController::ping');
+    $routes->get('api/open-ticket-count', 'Admin\DashboardController::openTicketCount');
 
     // Tickets admin - add retag route
     $routes->post('tickets/retag/(:num)',         'Admin\TicketController::retag/$1');

@@ -329,6 +329,56 @@
         document.getElementById('sidebar').classList.toggle('show');
     });
 </script>
+
+<?php if (session()->get('role') === 'admin'): ?>
+<script>
+(function () {
+    const BASE_TITLE   = <?= json_encode(esc($title ?? 'CBT Support Hub')) ?>;
+    const COUNT_URL    = '<?= site_url('admin/api/open-ticket-count') ?>';
+    const POLL_MS      = 15000; // poll every 15 s
+
+    let lastKnownCount = null;
+
+    function applyTabState(openCount) {
+        if (openCount > 0) {
+            document.title = '\uD83D\uDD34 (' + openCount + ') ' + BASE_TITLE;
+        } else {
+            document.title = BASE_TITLE;
+        }
+    }
+
+    async function fetchCount() {
+        try {
+            const res  = await fetch(COUNT_URL, { credentials: 'same-origin' });
+            if (!res.ok) return;
+            const data = await res.json();
+            const n    = parseInt(data.open, 10) || 0;
+
+            // Update tab title whenever tab is hidden
+            if (document.hidden) {
+                applyTabState(n);
+            } else {
+                // Tab is visible — restore clean title but keep count if page
+                // hasn't reloaded yet (stat-open element may already show it)
+                document.title = BASE_TITLE;
+            }
+
+            lastKnownCount = n;
+        } catch (e) { /* swallow network errors silently */ }
+    }
+
+    // When user comes back to the tab, restore clean title immediately
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden) {
+            document.title = BASE_TITLE;
+        }
+    });
+
+    // Start polling
+    setInterval(fetchCount, POLL_MS);
+})();
+</script>
+<?php endif; ?>
 <?= $this->renderSection('scripts') ?>
 </body>
 </html>
